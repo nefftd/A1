@@ -14,9 +14,9 @@ function http.start_http_server()
     srv:listen(80, function(conn)
         conn:on("receive", function(conn, payload)
         	print("Receiving");
-            if (string.find(payload, "GET / ")) then
-                conn:send("<h1>Status: "..status.."</h1>");
-            elseif (string.find(payload, "POST / ")) then
+            if (payload:find("GET / ")) then
+                conn:send("<h1>Status: "..DEVICE_STATUS.."</h1>");
+            elseif (payload:find("POST / ")) then
                 for k, v in pairs(http.get_settings_from_request(payload:match(".+[\r\n](.-)$"))) do 
                     if (k == "SSID") then
                         SSID = v;
@@ -32,11 +32,9 @@ function http.start_http_server()
                         print("Set device id to ", DEVICE_ID);
                     end
                 end
-                settings = require 'settings';
-                settings.write_settings_to_fs();
+                dofile'settings'.write_settings_to_fs();
                 conn:send("HTTP/1.1 200 OK\n<h1>OK</h1>");
                 srv:close();
-                settings = nil;
             end
         end)
         conn:on("sent", function(conn) conn:close() end);
@@ -44,17 +42,15 @@ function http.start_http_server()
 	print("Started HTTP server.");
 	if (SSID:match("^%s*$") ~= nil) then
 		--SSID is not set, we have to wait for the config
-		status = "Waiting for configuration.";
+		DEVICE_STATUS = "Waiting for configuration.";
 		print("Waiting for configuration");
-    elseif status == "Failed to connect to WiFi" then
+    elseif DEVICE_STATUS == "Failed to connect to WiFi" then
         print("Waiting for configuration");
 	else
 		tmr.alarm(0, 120000, 0, function() 
             print("Stopping server");
             srv:close();
-            a1 = require 'a1'
-            a1.connect_to_wifi();
-            a1 = nil;
+            dofile'a1'.connect_to_wifi();
         end);
 	end
 end

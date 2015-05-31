@@ -5,7 +5,7 @@ local pin = 1
 
 function temp_probe.find_temperature_probe()
   ow.setup(pin)
-  count = 0
+  local count = 0
   repeat
     count = count + 1
     addr = ow.reset_search(pin)
@@ -24,24 +24,22 @@ function temp_probe.get_temperature()
   if (address == nil) then
     temp_probe.find_temperature_probe()
   end
-  crc = ow.crc8(string.sub(address,1,7))
-  if (crc == address:byte(8)) then
+  if (ow.crc8(address:sub(1,7)) == address:byte(8)) then
     if ((address:byte(1) == 0x10) or (address:byte(1) == 0x28)) then
       ow.reset(pin)
       ow.select(pin, address)
       ow.write(pin, 0x44, 1)
       tmr.delay(1000000)
-      present = ow.reset(pin)
+      ow.reset(pin)
       ow.select(pin, address)
       ow.write(pin,0xBE,1)
-      data = string.char(ow.read(pin))
+      local data = ow.read(pin):char()
       for i = 1, 8 do
-        data = data .. string.char(ow.read(pin))
+        data = data .. ow.read(pin):char()
       end
       print(data:byte(1) .. ":" .. data:byte(2))
-      crc = ow.crc8(string.sub(data,1,8))
-      if (crc == data:byte(9)) then
-        temp = (data:byte(2) * 256 + (data:byte(1))) * 0.0625
+      if (ow.crc8(data:sub(1,8)) == data:byte(9)) then
+        local temp = (data:byte(2) * 256 + (data:byte(1))) * 0.0625
         if (data:byte(2) > 31) then
                  temp = -(255 - bit.rshift(bit.band((data:byte(2) * 256 + data:byte(1)), 2040), 3)) * 0.0625
         end

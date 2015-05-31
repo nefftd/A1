@@ -13,17 +13,15 @@ function a1.connect_to_wifi()
             	wifi_conn_timeout_counter = wifi_conn_timeout_counter + 1;
            	else
            		print("Can not connect to WiFi.");
-           		status = "Failed to connect to WiFi";
-           		local ap = require 'ap';
-				      ap.start_ap();
-				      ap = nil;
+           		DEVICE_STATUS = "Failed to connect to WiFi";
+              dofile'ap'.start_ap();
            		tmr.stop(1);
            	end
         else
             tmr.stop(1);
             print("Connected. IP: ", wifi.sta.getip());
             tmr.alarm(1, 10000, 1, function()
-              print("Temperature", require 'temp_probe'.get_temperature(), "C.");
+              print("Temperature", dofile'temp_probe'.get_temperature(), "C.");
             end)
         end
     end)
